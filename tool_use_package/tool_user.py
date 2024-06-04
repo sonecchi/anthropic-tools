@@ -4,8 +4,8 @@ import re
 import builtins
 import ast
 
-from .prompt_constructors import construct_use_tools_prompt, construct_successful_function_run_injection_prompt, construct_error_function_run_injection_prompt, construct_prompt_from_messages
-from .messages_api_converters import convert_completion_to_messages, convert_messages_completion_object_to_completions_completion_object
+from prompt_constructors import construct_use_tools_prompt, construct_successful_function_run_injection_prompt, construct_error_function_run_injection_prompt, construct_prompt_from_messages
+from messages_api_converters import convert_completion_to_messages, convert_messages_completion_object_to_completions_completion_object
 
 class ToolUser:
     """
@@ -75,7 +75,7 @@ class ToolUser:
         completion = self._complete(self.current_prompt, max_tokens_to_sample=max_tokens_to_sample, temperature=temperature)
 
         if completion.stop_reason == 'stop_sequence':
-            if completion.stop == '</function_calls>': # Would be good to combine this with above if statement if completion.stop is guaranteed to be present
+            if completion.stop == '</function_calls>':  # Would be good to combine this with above if statement if completion.stop is guaranteed to be present
                 formatted_completion = f"{completion.completion}</function_calls>"
             else:
                 formatted_completion = completion.completion
@@ -183,7 +183,8 @@ class ToolUser:
             if not evaluate_function_calls:
                 invoke_results.append({"tool_name": tool_name, "tool_arguments": converted_params})
             else:
-                invoke_results.append({"tool_name": tool_name, "tool_result": tool.use_tool(**converted_params)})
+                _tool_result = tool.use_tool(**converted_params)
+                invoke_results.append({"tool_name": tool_name, "tool_result": _tool_result})
         
         return {"status": "SUCCESS", "invoke_results": invoke_results, "content": invoke_calls['prefix_content']}
     

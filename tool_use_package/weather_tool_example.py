@@ -8,8 +8,15 @@
 import requests
 
 # We start by importing the necessary classes, BaseTool for defining our weather tool, and ToolUser for using it with Claude.
-from .tools.base_tool import BaseTool
-from .tool_user import ToolUser
+from tools.base_tool import BaseTool
+from tool_user import ToolUser
+import os
+from dotenv import load_dotenv
+import json
+
+# .envファイルを読み込む
+load_dotenv()
+
 
 
 # In order to define our tool we inherit the BaseTool class.
@@ -19,11 +26,18 @@ class WeatherTool(BaseTool):
 
     def use_tool(self, city: str):
         """Gets the lat and long of the given city, then uses these to get the weater forecast from the public open-meteo API."""
+        # curl 'https://nominatim.openstreetmap.org/search?q=San+Francisco&format=json&limit=1'
 
         url = "https://nominatim.openstreetmap.org/search"
         params = {'q': city, 'format': 'json', 'limit': 1}
-        response = requests.get(url, params=params).json()
-        
+        # response = requests.get(url, params=params)
+        # response = response.json()
+
+        response = '''
+        [{"place_id":312239722,"licence":"Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright","osm_type":"relation","osm_id":111968,"lat":"37.7792588","lon":"-122.4193286","class":"boundary","type":"administrative","place_rank":12,"importance":0.7251309463713038,"addresstype":"city","name":"San Francisco","display_name":"San Francisco, California, United States","boundingbox":["37.6403143","37.9298110","-123.1738250","-122.2814790"]}]
+        '''
+        response = json.loads(response)
+
         if response:
             lat = response[0]["lat"]
             lon = response[0]["lon"]
@@ -50,7 +64,14 @@ weather_tool = WeatherTool(tool_name, tool_description, tool_parameters)
 # Pass the tool instance into the ToolUser
 tool_user = ToolUser([weather_tool])
 
+
+
 # Call the tool_user with a prompt to get a version of Claude that can use your tools!
 if __name__ == '__main__':
-    messages = [{"role":"user", "content":"I live in San Francisco, what should I wear today?"}]
+    print(f'----- start -----')
+    # print( os.getenv('ANTHROPIC_API_KEY') )
+    content = "I live in San Francisco, what should I wear today?"
+    messages = [{"role": "user", "content": content}]
+
     print(tool_user.use_tools(messages, execution_mode="automatic"))
+    print(f'----- end -----')
